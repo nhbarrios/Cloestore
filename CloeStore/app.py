@@ -1,0 +1,281 @@
+import streamlit as st
+import urllib.parse
+import json
+import os
+import requests
+import base64
+
+# ==========================================
+# CONFIGURACIÓN GENERAL Y APIS
+# ==========================================
+NUMERO_WHATSAPP = "50558222234" 
+st.set_page_config(page_title="CloeStore - Catálogo Oficial", page_icon="🛍️", layout="wide")
+
+# 🔑 Tu llave real de ImgBB integrada directamente
+IMGBB_API_KEY = "1e5fcc62125e29d232617174f88d2e6c" 
+
+DB_FILE = "database.json"
+
+DEFAULT_DATA = {
+    "secciones": {
+        "Ropa de Niño": {"anuncio": "¡Colección de temporada con 15% de descuento directo! ❄️", "activa": True},
+        "Calzado": {"anuncio": "Calzado unisex cómodo para los consentidos del hogar. 👟", "activa": True},
+        "Bisutería y Accesorios": {"anuncio": "Prendas delicadas para resaltar tu estilo diario. ✨", "activa": True}
+    },
+    "lista_productos": [
+        {"id": 1, "nombre": "Conjunto Infantil Unisex - Algodón Premium", "categoria": "Ropa de Niño", "imagen": "https://images.unsplash.com/photo-1519704943960-ab388d5904ca?w=500", "activo": True, "agotado": False},
+        {"id": 2, "nombre": "Zapatos Deportivos Blandos para Bebé", "categoria": "Calzado", "imagen": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500", "activo": True, "agotado": False},
+        {"id": 3, "nombre": "Pulsera Ajustable de Bisutería Artesanal", "categoria": "Bisutería y Accesorios", "imagen": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500", "activo": True, "agotado": True}
+    ]
+}
+
+def cargar_datos():
+    if not os.path.exists(DB_FILE):
+        with open(DB_FILE, "w", encoding="utf-8") as f:
+            json.dump(DEFAULT_DATA, f, ensure_ascii=False, indent=4)
+        return DEFAULT_DATA
+    with open(DB_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def guardar_datos(datos):
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(datos, f, ensure_ascii=False, indent=4)
+
+def subir_imagen_a_nube(file_buffer):
+    """Sube la imagen a ImgBB y devuelve la URL pública permanente."""
+    if not IMGBB_API_KEY:
+        st.error("❌ Error: No se ha detectado la clave de la API.")
+        return None
+    try:
+        url = "https://api.imgbb.com/1/upload"
+        b64_image = base64.b64encode(file_buffer.read()).decode('utf-8')
+        payload = {
+            "key": IMGBB_API_KEY,
+            "image": b64_image
+        }
+        res = requests.post(url, data=payload)
+        res_json = res.json()
+        if res.status_code == 200 and res_json["success"]:
+            return res_json["data"]["url"]
+        else:
+            st.error(f"Error de ImgBB: {res_json['error']['message']}")
+            return None
+    except Exception as e:
+        st.error(f"Error de conexión al subir imagen: {e}")
+        return None
+
+datos_actuales = cargar_datos()
+
+if "carrito" not in st.session_state:
+    st.session_state.carrito = {}
+
+if "mensaje_exito" not in st.session_state:
+    st.session_state.mensaje_exito = False
+
+query_params = st.query_params
+es_admin = query_params.get("admin") == "true"
+
+# ------------------------------------------
+# VISTA 1: ÁREA DE ADMINISTRACIÓN (?admin=true)
+# ------------------------------------------
+if es_admin:
+    st.title("⚙️ Centro de Control CloeStore")
+    st.caption("Panel de administración con carga directa de imágenes a la nube.")
+    st.markdown("---")
+    
+    if st.session_state.mensaje_exito:
+        st.success("💾 ¡CAMBIOS Y FOTOS GUARDADAS CON ÉXITO EN LA NUBE!")
+        st.session_state.mensaje_exito = False 
+    
+    # --- GESTIÓN DE SECCIONES ---
+    st.header("🗂️ Gestión de Secciones del Catálogo")
+    with st.expander("➕ Crear o Eliminar una Sección Completa", expanded=False):
+        col_nueva, col_accion = st.columns([3, 1])
+        with col_nueva:
+            nueva_sec_nombre = st.text_input("Nombre de la nueva sección:", placeholder="Ej: Vestidos Juveniles...", key="input_nueva_seccion")
+        with col_accion:
+            st.write("##")
+            if st.button("Crear Sección", use_container_width=True, type="primary"):
+                if nueva_sec_nombre and nueva_sec_nombre not in datos_actuales["secciones"]:
+                    datos_actuales["secciones"][nueva_sec_nombre] = {"anuncio": "", "activa": True}
+                    guardar_datos(datos_actuales)
+                    st.session_state.mensaje_exito = True
+                    st.rerun()
+                    
+        st.write("---")
+        for sec_name, sec_info in list(datos_actuales["secciones"].items()):
+            col_check, col_del = st.columns([3, 1])
+            with col_check:
+                estado_check = st.checkbox(f"Sección Activa: {sec_name}", value=sec_info["activa"], key=f"status_{sec_name}")
+                if estado_check != sec_info["activa"]:
+                    datos_actuales["secciones"][sec_name]["activa"] = estado_check
+                    guardar_datos(datos_actuales)
+                    st.session_state.mensaje_exito = True
+                    st.rerun()
+            with col_del:
+                if st.button("🗑️ Eliminar Sección", key=f"del_sec_{sec_name}"):
+                    del datos_actuales["secciones"][sec_name]
+                    datos_actuales["lista_productos"] = [p for p in datos_actuales["lista_productos"] if p["categoria"] != sec_name]
+                    guardar_datos(datos_actuales)
+                    st.session_state.mensaje_exito = True
+                    st.rerun()
+
+    st.markdown("---")
+    
+    # --- FORMULARIO MAESTRO ---
+    st.header("📸 Carga de Mercadería Real")
+    st.write("Sube las fotos reales de tus prendas. El sistema las almacenará en la nube y actualizará el catálogo automáticamente.")
+    
+    with st.form(key="formulario_maestro_cloe"):
+        st.form_submit_button("💾 GUARDAR TODOS LOS CAMBIOS DE LA PÁGINA", use_container_width=True, type="primary", key="btn_guardar_arriba")
+        st.write("")
+        
+        for sec_name, sec_info in datos_actuales["secciones"].items():
+            if not sec_info["activa"]:
+                continue
+                
+            with st.container(border=True):
+                st.subheader(f"📁 Categoría: {sec_name}")
+                
+                st.text_input(f"📢 Anuncio / Promoción para {sec_name}:", value=sec_info["anuncio"], key=f"ann_{sec_name}")
+                
+                # CARGADOR DE IMÁGENES REALES
+                fotos_subidas = st.file_uploader(f"📸 Arrastra o selecciona las fotos reales para {sec_name}:", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key=f"up_{sec_name}")
+                
+                st.write("**📦 Artículos registrados:**")
+                prod_de_seccion = [p for p in datos_actuales["lista_productos"] if p["categoria"] == sec_name]
+                
+                if not prod_de_seccion:
+                    st.info("Sin artículos. Sube fotos reales arriba para llenar esta sección.")
+                else:
+                    for prod in prod_de_seccion:
+                        col_p_img, col_p_nombre, col_p_vis, col_p_ago, col_p_del = st.columns([1, 3, 2, 2, 1])
+                        with col_p_img:
+                            st.image(prod["imagen"], width=50)
+                        with col_p_nombre:
+                            st.text_input("Nombre", value=prod["nombre"], key=f"name_{prod['id']}", label_visibility="collapsed")
+                        with col_p_vis:
+                            st.checkbox("🟢 Visible", value=prod["activo"], key=f"act_{prod['id']}")
+                        with col_p_ago:
+                            # PARCHEADO: Corrección del valor del checkbox
+                            st.checkbox("🔴 Agotado", value=prod.get("agotado", False), key=f"ago_{prod['id']}")
+                        with col_p_del:
+                            st.checkbox("🗑️ Borrar", value=False, key=f"del_{prod['id']}")
+                            
+        st.markdown("---")
+        boton_guardar_final = st.form_submit_button("💾 GUARDAR TODOS LOS CAMBIOS DE LA PÁGINA", use_container_width=True, type="primary", key="btn_guardar_abajo")
+        
+        if boton_guardar_final:
+            productos_actualizados = []
+            
+            # 1. Actualizar textos y estados de ítems existentes
+            for sec_name in datos_actuales["secciones"]:
+                if f"ann_{sec_name}" in st.session_state:
+                    datos_actuales["secciones"][sec_name]["anuncio"] = st.session_state[f"ann_{sec_name}"]
+            
+            for prod in datos_actuales["lista_productos"]:
+                key_del = f"del_{prod['id']}"
+                if key_del in st.session_state and st.session_state[key_del]:
+                    continue
+                
+                if f"name_{prod['id']}" in st.session_state:
+                    prod["nombre"] = st.session_state[f"name_{prod['id']}"]
+                    prod["activo"] = st.session_state[f"act_{prod['id']}"]
+                    # PARCHEADO: Guardado directo limpio
+                    prod["agotado"] = st.session_state[f"ago_{prod['id']}"]
+                
+                productos_actualizados.append(prod)
+            
+            # 2. PROCESAR E INYECTAR IMÁGENES REALES SUBIDAS A LA NUBE
+            for sec_name in datos_actuales["secciones"]:
+                key_up = f"up_{sec_name}"
+                if key_up in st.session_state and st.session_state[key_up]:
+                    with st.spinner(f"Subiendo imágenes de {sec_name} a la nube..."):
+                        for foto in st.session_state[key_up]:
+                            url_nube = subir_imagen_a_nube(foto)
+                            if url_nube:
+                                nuevo_id = max([p["id"] for p in productos_actualizados], default=0) + 1
+                                productos_actualizados.append({
+                                    "id": nuevo_id,
+                                    "nombre": f"Nueva Prenda {sec_name} #{nuevo_id}",
+                                    "categoria": sec_name,
+                                    "imagen": url_nube, 
+                                    "activo": True,
+                                    "agotado": False
+                                })
+            
+            datos_actuales["lista_productos"] = productos_actualizados
+            guardar_datos(datos_actuales)
+            st.session_state.mensaje_exito = True
+            st.rerun()
+
+# ------------------------------------------
+# VISTA 2: ÁREA DEL CLIENTE (URL Normal)
+# ------------------------------------------
+else:
+    st.title("🛍️ Catálogo Oficial - CloeStore")
+    st.write("Selecciona lo que te encante, agrégalo a tu consulta y coordinamos el apartado por WhatsApp.")
+    st.markdown("---")
+    
+    secciones_activas = [name for name, info in datos_actuales["secciones"].items() if info["activa"]]
+    
+    if not secciones_activas:
+        st.info("Catálogo en mantenimiento por actualización de mercadería. ¡Vuelve pronto!")
+    else:
+        categoria_seleccionada = st.selectbox("🔍 ¿Qué línea deseas explorar hoy?:", ["Todos"] + secciones_activas)
+        col_tienda, col_carrito = st.columns([3, 1])
+        
+        with col_tienda:
+            if categoria_seleccionada != "Todos":
+                anuncio_actual = datos_actuales["secciones"][categoria_seleccionada]["anuncio"]
+                if anuncio_actual:
+                    st.info(f"📢 {anuncio_actual}")
+                    
+            cols_grid = st.columns(3)
+            col_idx = 0
+            
+            for prod in datos_actuales["lista_productos"]:
+                if not prod["activo"] or prod["categoria"] not in secciones_activas:
+                    continue
+                if categoria_seleccionada != "Todos" and prod["categoria"] != categoria_seleccionada:
+                    continue
+                    
+                with cols_grid[col_idx % 3]:
+                    st.image(prod["imagen"], use_container_width=True)
+                    st.subheader(prod["nombre"])
+                    st.caption(f"Línea: {prod['categoria']}")
+                    
+                    if prod["agotado"]:
+                        st.button("❌ Agotado temporalmente", key=f"btn_ago_{prod['id']}", disabled=True, use_container_width=True)
+                    else:
+                        if st.button("➕ Agregar para consultar", key=f"add_{prod['id']}", use_container_width=True):
+                            st.session_state.carrito[prod["id"]] = prod["nombre"]
+                            st.toast(f"Agregado: {prod['nombre']}")
+                    st.write("")
+                    col_idx += 1
+                    
+        with col_carrito:
+            st.subheader("🛒 Tu Consulta")
+            if not st.session_state.carrito:
+                st.info("Tu lista está vacía.")
+            else:
+                nombre_cliente = st.text_input("Tu Nombre Completo:", placeholder="Ej: María Pérez")
+                st.write("**Productos:**")
+                items_mensaje = []
+                
+                for id_prod, nombre_prod in list(st.session_state.carrito.items()):
+                    st.caption(f"• {nombre_prod}")
+                    items_mensaje.append(f"- {nombre_prod} (ID: #{id_prod})")
+                    if st.button("Quitar ❌", key=f"del_{id_prod}"):
+                        del st.session_state.carrito[id_prod]
+                        st.rerun()
+                
+                st.markdown("---")
+                if nombre_cliente:
+                    texto_productos = "\n".join(items_mensaje)
+                    mensaje_final = f"¡Hola CloeStore!\n\nMi nombre es *{nombre_cliente}* y estoy interesada en consultar el precio de los siguientes productos para un apartado:\n\n{texto_productos}"
+                    mensaje_codificado = urllib.parse.quote(mensaje_final)
+                    url_final = f"https://wa.me/{NUMERO_WHATSAPP}?text={mensaje_codificado}"
+                    st.link_button("🚀 Consultar Precio en WhatsApp", url_final, type="primary", use_container_width=True)
+                else:
+                    st.warning("✍️ Escribe tu nombre para activar el botón de WhatsApp.")

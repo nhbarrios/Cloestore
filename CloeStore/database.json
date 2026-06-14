@@ -1,0 +1,46 @@
+{
+    "secciones": {
+        "Ropa de Niño": {
+            "anuncio": "¡Colección de temporada con 15% de descuento directo! ❄️",
+            "activa": true
+        },
+        "Calzado": {
+            "anuncio": "Calzado unisex cómodo para los consentidos del hogar. 👟",
+            "activa": true
+        },
+        "Bisutería y Accesorios": {
+            "anuncio": "Prendas delicadas para resaltar tu estilo diario. ✨",
+            "activa": true
+        },
+        "Vestidos": {
+            "anuncio": "",
+            "activa": true
+        }
+    },
+    "lista_productos": [
+        {
+            "id": 1,
+            "nombre": "Conjunto Infantil Unisex - Algodón Premium",
+            "categoria": "Ropa de Niño",
+            "imagen": "https://images.unsplash.com/photo-1519704943960-ab388d5904ca?w=500",
+            "activo": true,
+            "agotado": false
+        },
+        {
+            "id": 2,
+            "nombre": "Zapatos Deportivos Blandos para Bebé",
+            "categoria": "Calzado",
+            "imagen": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500",
+            "activo": true,
+            "agotado": false
+        },
+        {
+            "id": 3,
+            "nombre": "Pulsera Ajustable de Bisutería Artesanal",
+            "categoria": "Bisutería y Accesorios",
+            "imagen": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500",
+            "activo": true,
+            "agotado": true
+        }
+    ]
+}
