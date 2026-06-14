@@ -14,9 +14,8 @@ st.set_page_config(page_title="CloeStore - Catálogo Oficial", page_icon="🛍�
 # 🔑 Tu llave real de ImgBB integrada directamente
 IMGBB_API_KEY = "1e5fcc62125e29d232617174f88d2e6c" 
 
-# 🛠️ ENLACES DE TU LOGO Y BANNER (De ejemplo temporalmente, luego pones los tuyos)
+# 🛠️ ENLACE DE TU LOGO (Reemplázalo por tu enlace directo de ImgBB cuando lo subas)
 LOGO_URL = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=150" 
-BANNER_URL = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1200&q=80"
 
 DB_FILE = "database.json"
 
@@ -76,9 +75,10 @@ if "carrito" not in st.session_state:
 if "mensaje_exito" not in st.session_state:
     st.session_state.mensaje_exito = False
 
+# 🔒 CONTROL DE ACCESO CON STREAMLIT SECRETS
 query_params = st.query_params
-# 🔒 Cambiado por seguridad a una clave secreta que tú elijas
-es_admin = query_params.get("admin") == "CloeAdmin2026"
+clave_secreta = st.secrets.get("CLAVE_ADMIN", "210825")
+es_admin = query_params.get("admin") == clave_secreta
 
 # ------------------------------------------
 # VISTA 1: ÁREA DE ADMINISTRACIÓN
@@ -216,18 +216,17 @@ if es_admin:
 # VISTA 2: ÁREA DEL CLIENTE (URL Normal)
 # ------------------------------------------
 else:
-    # 🌟 NUEVO ENCABEZADO PUBLICITARIO E INFORMATIVO
+    # 🌟 ESPACIO DE ENCABEZADO PUBLICITARIO E INFORMATIVO
     col_logo, col_info = st.columns([1, 4])
     
     with col_logo:
-        # Pinta el logo redondo o cuadrado al lado de la información
         st.image(LOGO_URL, width=130)
         
     with col_info:
         st.markdown("<h1 style='margin-bottom: 0px;'>🛍️ CloeStore</h1>", unsafe_allow_html=True)
         st.markdown("<p style='font-size: 18px; color: gray; margin-top: 0px;'>Tu Tienda Virtual de Confianza</p>", unsafe_allow_html=True)
         
-        # Datos informativos en columnas pequeñas limpias
+        # Detalles informativos organizados
         col_inf_1, col_inf_2, col_inf_3 = st.columns(3)
         with col_inf_1:
             st.markdown("📍 **Ubicación:**<br>Isla de Ometepe, Nicaragua", unsafe_allow_html=True)
