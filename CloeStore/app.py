@@ -14,6 +14,10 @@ st.set_page_config(page_title="CloeStore - Catálogo Oficial", page_icon="🛍�
 # 🔑 Tu llave real de ImgBB integrada directamente
 IMGBB_API_KEY = "1e5fcc62125e29d232617174f88d2e6c" 
 
+# 🛠️ ENLACES DE TU LOGO Y BANNER (De ejemplo temporalmente, luego pones los tuyos)
+LOGO_URL = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=150" 
+BANNER_URL = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1200&q=80"
+
 DB_FILE = "database.json"
 
 DEFAULT_DATA = {
@@ -73,10 +77,11 @@ if "mensaje_exito" not in st.session_state:
     st.session_state.mensaje_exito = False
 
 query_params = st.query_params
-es_admin = query_params.get("admin") == "true"
+# 🔒 Cambiado por seguridad a una clave secreta que tú elijas
+es_admin = query_params.get("admin") == "CloeAdmin2026"
 
 # ------------------------------------------
-# VISTA 1: ÁREA DE ADMINISTRACIÓN (?admin=true)
+# VISTA 1: ÁREA DE ADMINISTRACIÓN
 # ------------------------------------------
 if es_admin:
     st.title("⚙️ Centro de Control CloeStore")
@@ -157,7 +162,6 @@ if es_admin:
                         with col_p_vis:
                             st.checkbox("🟢 Visible", value=prod["activo"], key=f"act_{prod['id']}")
                         with col_p_ago:
-                            # PARCHEADO: Corrección del valor del checkbox
                             st.checkbox("🔴 Agotado", value=prod.get("agotado", False), key=f"ago_{prod['id']}")
                         with col_p_del:
                             st.checkbox("🗑️ Borrar", value=False, key=f"del_{prod['id']}")
@@ -181,7 +185,6 @@ if es_admin:
                 if f"name_{prod['id']}" in st.session_state:
                     prod["nombre"] = st.session_state[f"name_{prod['id']}"]
                     prod["activo"] = st.session_state[f"act_{prod['id']}"]
-                    # PARCHEADO: Guardado directo limpio
                     prod["agotado"] = st.session_state[f"ago_{prod['id']}"]
                 
                 productos_actualizados.append(prod)
@@ -213,8 +216,26 @@ if es_admin:
 # VISTA 2: ÁREA DEL CLIENTE (URL Normal)
 # ------------------------------------------
 else:
-    st.title("🛍️ Catálogo Oficial - CloeStore")
-    st.write("Selecciona lo que te encante, agrégalo a tu consulta y coordinamos el apartado por WhatsApp.")
+    # 🌟 NUEVO ENCABEZADO PUBLICITARIO E INFORMATIVO
+    col_logo, col_info = st.columns([1, 4])
+    
+    with col_logo:
+        # Pinta el logo redondo o cuadrado al lado de la información
+        st.image(LOGO_URL, width=130)
+        
+    with col_info:
+        st.markdown("<h1 style='margin-bottom: 0px;'>🛍️ CloeStore</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 18px; color: gray; margin-top: 0px;'>Tu Tienda Virtual de Confianza</p>", unsafe_allow_html=True)
+        
+        # Datos informativos en columnas pequeñas limpias
+        col_inf_1, col_inf_2, col_inf_3 = st.columns(3)
+        with col_inf_1:
+            st.markdown("📍 **Ubicación:**<br>Isla de Ometepe, Nicaragua", unsafe_allow_html=True)
+        with col_inf_2:
+            st.markdown("⏰ **Atención:**<br>Lunes a Sábado: 8 AM - 6 PM", unsafe_allow_html=True)
+        with col_inf_3:
+            st.markdown("🚚 **Envíos:**<br>Entregas locales garantizadas", unsafe_allow_html=True)
+
     st.markdown("---")
     
     secciones_activas = [name for name, info in datos_actuales["secciones"].items() if info["activa"]]
