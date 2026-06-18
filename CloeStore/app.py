@@ -9,7 +9,7 @@ import base64
 # CONFIGURACIÓN GENERAL Y APIS
 # ==========================================
 NUMERO_WHATSAPP = "50558222234" 
-st.set_page_config(page_title="CloeStore - Catálogo Oficial", page_icon="🛍️", layout="wide")
+st.set_page_config(page_title="El mundo de Cloe - Catálogo Oficial", page_icon="🛍️", layout="wide")
 
 # 🔑 Tu llave real de ImgBB integrada directamente
 IMGBB_API_KEY = "1e5fcc62125e29d232617174f88d2e6c" 
@@ -277,7 +277,7 @@ else:
         st.image(LOGO_URL, width=130)
         
     with col_info:
-        st.markdown("<h1 style='margin-bottom: 0px;'>🛍️ CloeStore</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='margin-bottom: 0px;'>🛍️ El mundo de Cloe</h1>", unsafe_allow_html=True)
         st.markdown("<p style='font-size: 18px; color: gray; margin-top: 0px;'>Tu Tienda Virtual de Confianza</p>", unsafe_allow_html=True)
         
         # Detalles informativos organizados
