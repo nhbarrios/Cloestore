@@ -8,7 +8,7 @@ import base64
 # ==========================================
 # CONFIGURACIÓN GENERAL Y APIS
 # ==========================================
-NUMERO_WHATSAPP = "50558222234" 
+NUMERO_WHATSAPP = "50588325774" 
 st.set_page_config(page_title="CloeStore - Catálogo Oficial", page_icon="🛍️", layout="wide")
 
 # 🔑 Tu llave real de ImgBB integrada directamente
