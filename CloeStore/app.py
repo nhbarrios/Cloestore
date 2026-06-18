@@ -9,17 +9,18 @@ import base64
 # CONFIGURACIÓN GENERAL Y APIS
 # ==========================================
 NUMERO_WHATSAPP = "50558222234" 
-st.set_page_config(page_title="El mundo de Cloe - Catálogo Oficial", page_icon="🛍️", layout="wide")
+st.set_page_config(page_title="CloeStore - Catálogo Oficial", page_icon="🛍️", layout="wide")
 
 # 🔑 Tu llave real de ImgBB integrada directamente
 IMGBB_API_KEY = "1e5fcc62125e29d232617174f88d2e6c" 
 
-# 🛠️ ENLACE DE TU LOGO (Reemplázalo por tu enlace directo de ImgBB cuando lo subas)
-LOGO_URL = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=150" 
-
 DB_FILE = "database.json"
 
+# 🛠️ Logo por defecto (se usa solo si nunca has subido uno desde el panel de admin)
+LOGO_URL_DEFAULT = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=150"
+
 DEFAULT_DATA = {
+    "logo_url": LOGO_URL_DEFAULT,
     "secciones": {
         "Ropa de Niño": {"anuncio": "¡Colección de temporada con 15% de descuento directo! ❄️", "activa": True},
         "Calzado": {"anuncio": "Calzado unisex cómodo para los consentidos del hogar. 👟", "activa": True},
@@ -38,7 +39,11 @@ def cargar_datos():
             json.dump(DEFAULT_DATA, f, ensure_ascii=False, indent=4)
         return DEFAULT_DATA
     with open(DB_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        datos = json.load(f)
+    # Compatibilidad: si la base de datos es de antes de tener logo editable
+    if "logo_url" not in datos:
+        datos["logo_url"] = LOGO_URL_DEFAULT
+    return datos
 
 def guardar_datos(datos):
     with open(DB_FILE, "w", encoding="utf-8") as f:
@@ -99,6 +104,39 @@ if es_admin:
     if st.session_state.mensaje_exito:
         st.success("💾 ¡CAMBIOS Y FOTOS GUARDADAS CON ÉXITO EN LA NUBE!")
         st.session_state.mensaje_exito = False 
+    
+    # --- LOGO DE LA TIENDA ---
+    st.header("🖼️ Logo de la Tienda")
+    col_logo_actual, col_logo_subir = st.columns([1, 3])
+    
+    with col_logo_actual:
+        st.write("**Logo actual:**")
+        st.image(datos_actuales.get("logo_url", LOGO_URL_DEFAULT), width=100)
+    
+    with col_logo_subir:
+        if "contador_logo" not in st.session_state:
+            st.session_state.contador_logo = 0
+        
+        archivo_logo = st.file_uploader(
+            "Sube una imagen para reemplazar el logo:",
+            type=["png", "jpg", "jpeg"],
+            accept_multiple_files=False,
+            key=f"logo_up_{st.session_state.contador_logo}"
+        )
+        
+        if archivo_logo is not None:
+            if st.button("💾 Guardar nuevo logo", type="primary", key="btn_guardar_logo"):
+                with st.spinner("Subiendo logo a la nube..."):
+                    url_logo = subir_imagen_a_nube(archivo_logo)
+                    if url_logo:
+                        datos_actuales["logo_url"] = url_logo
+                        guardar_datos(datos_actuales)
+                        st.session_state.mensaje_exito = True
+                        # Cambia el key del uploader para "vaciarlo" tras guardar
+                        st.session_state.contador_logo += 1
+                        st.rerun()
+
+    st.markdown("---")
     
     # --- GESTIÓN DE SECCIONES ---
     st.header("🗂️ Gestión de Secciones del Catálogo")
@@ -274,10 +312,10 @@ else:
     col_logo, col_info = st.columns([1, 4])
     
     with col_logo:
-        st.image(LOGO_URL, width=130)
+        st.image(datos_actuales.get("logo_url", LOGO_URL_DEFAULT), width=130)
         
     with col_info:
-        st.markdown("<h1 style='margin-bottom: 0px;'>🛍️ El mundo de Cloe</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='margin-bottom: 0px;'>🛍️ CloeStore</h1>", unsafe_allow_html=True)
         st.markdown("<p style='font-size: 18px; color: gray; margin-top: 0px;'>Tu Tienda Virtual de Confianza</p>", unsafe_allow_html=True)
         
         # Detalles informativos organizados
@@ -353,4 +391,3 @@ else:
                     st.link_button("🚀 Consultar Precio en WhatsApp", url_final, type="primary", use_container_width=True)
                 else:
                     st.warning("✍️ Escribe tu nombre para activar el botón de WhatsApp.")
-
