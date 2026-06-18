@@ -315,7 +315,7 @@ else:
         st.image(datos_actuales.get("logo_url", LOGO_URL_DEFAULT), width=130)
         
     with col_info:
-        st.markdown("<h1 style='margin-bottom: 0px;'>🛍️ CloeStore</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='margin-bottom: 0px;'>🛍️ El mundo de Cloe</h1>", unsafe_allow_html=True)
         st.markdown("<p style='font-size: 18px; color: gray; margin-top: 0px;'>Tu Tienda Virtual de Confianza</p>", unsafe_allow_html=True)
         
         # Detalles informativos organizados
