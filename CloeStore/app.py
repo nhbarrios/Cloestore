@@ -51,6 +51,7 @@ def subir_imagen_a_nube(file_buffer):
         return None
     try:
         url = "https://api.imgbb.com/1/upload"
+        file_buffer.seek(0)
         b64_image = base64.b64encode(file_buffer.read()).decode('utf-8')
         payload = {
             "key": IMGBB_API_KEY,
@@ -58,14 +59,21 @@ def subir_imagen_a_nube(file_buffer):
         }
         res = requests.post(url, data=payload)
         res_json = res.json()
-        if res.status_code == 200 and res_json["success"]:
+        if res.status_code == 200 and res_json.get("success"):
             return res_json["data"]["url"]
         else:
-            st.error(f"Error de ImgBB: {res_json['error']['message']}")
+            mensaje_error = res_json.get("error", {}).get("message", "Error desconocido al subir la imagen.")
+            st.error(f"Error de ImgBB: {mensaje_error}")
             return None
     except Exception as e:
         st.error(f"Error de conexión al subir imagen: {e}")
         return None
+
+def nombre_sugerido_desde_archivo(filename):
+    """Convierte 'blusa_rosada_01.jpg' en 'Blusa Rosada 01' como sugerencia de nombre."""
+    nombre = os.path.splitext(filename)[0]
+    nombre = nombre.replace("_", " ").replace("-", " ")
+    return nombre.strip().title()
 
 datos_actuales = cargar_datos()
 
@@ -127,12 +135,12 @@ if es_admin:
 
     st.markdown("---")
     
-    # --- FORMULARIO MAESTRO ---
-    st.header("📸 Carga de Mercadería Real")
-    st.write("Sube las fotos reales de tus prendas. El sistema las almacenará en la nube y actualizará el catálogo automáticamente.")
+    # --- FORMULARIO DE EDICIÓN DE PRODUCTOS EXISTENTES ---
+    st.header("📦 Productos Existentes")
+    st.write("Edita anuncios, nombres, visibilidad y disponibilidad de tus productos actuales.")
     
     with st.form(key="formulario_maestro_cloe"):
-        st.form_submit_button("💾 GUARDAR TODOS LOS CAMBIOS DE LA PÁGINA", use_container_width=True, type="primary", key="btn_guardar_arriba")
+        st.form_submit_button("💾 GUARDAR CAMBIOS DE PRODUCTOS", use_container_width=True, type="primary", key="btn_guardar_arriba")
         st.write("")
         
         for sec_name, sec_info in datos_actuales["secciones"].items():
@@ -144,14 +152,11 @@ if es_admin:
                 
                 st.text_input(f"📢 Anuncio / Promoción para {sec_name}:", value=sec_info["anuncio"], key=f"ann_{sec_name}")
                 
-                # CARGADOR DE IMÁGENES REALES
-                fotos_subidas = st.file_uploader(f"📸 Arrastra o selecciona las fotos reales para {sec_name}:", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key=f"up_{sec_name}")
-                
                 st.write("**📦 Artículos registrados:**")
                 prod_de_seccion = [p for p in datos_actuales["lista_productos"] if p["categoria"] == sec_name]
                 
                 if not prod_de_seccion:
-                    st.info("Sin artículos. Sube fotos reales arriba para llenar esta sección.")
+                    st.info("Sin artículos todavía. Usa el subidor masivo más abajo para agregar fotos.")
                 else:
                     for prod in prod_de_seccion:
                         col_p_img, col_p_nombre, col_p_vis, col_p_ago, col_p_del = st.columns([1, 3, 2, 2, 1])
@@ -167,12 +172,11 @@ if es_admin:
                             st.checkbox("🗑️ Borrar", value=False, key=f"del_{prod['id']}")
                             
         st.markdown("---")
-        boton_guardar_final = st.form_submit_button("💾 GUARDAR TODOS LOS CAMBIOS DE LA PÁGINA", use_container_width=True, type="primary", key="btn_guardar_abajo")
+        boton_guardar_final = st.form_submit_button("💾 GUARDAR CAMBIOS DE PRODUCTOS", use_container_width=True, type="primary", key="btn_guardar_abajo")
         
         if boton_guardar_final:
             productos_actualizados = []
             
-            # 1. Actualizar textos y estados de ítems existentes
             for sec_name in datos_actuales["secciones"]:
                 if f"ann_{sec_name}" in st.session_state:
                     datos_actuales["secciones"][sec_name]["anuncio"] = st.session_state[f"ann_{sec_name}"]
@@ -189,28 +193,78 @@ if es_admin:
                 
                 productos_actualizados.append(prod)
             
-            # 2. PROCESAR E INYECTAR IMÁGENES REALES SUBIDAS A LA NUBE
-            for sec_name in datos_actuales["secciones"]:
-                key_up = f"up_{sec_name}"
-                if key_up in st.session_state and st.session_state[key_up]:
-                    with st.spinner(f"Subiendo imágenes de {sec_name} a la nube..."):
-                        for foto in st.session_state[key_up]:
-                            url_nube = subir_imagen_a_nube(foto)
-                            if url_nube:
-                                nuevo_id = max([p["id"] for p in productos_actualizados], default=0) + 1
-                                productos_actualizados.append({
-                                    "id": nuevo_id,
-                                    "nombre": f"Nueva Prenda {sec_name} #{nuevo_id}",
-                                    "categoria": sec_name,
-                                    "imagen": url_nube, 
-                                    "activo": True,
-                                    "agotado": False
-                                })
-            
             datos_actuales["lista_productos"] = productos_actualizados
             guardar_datos(datos_actuales)
             st.session_state.mensaje_exito = True
             st.rerun()
+
+    st.markdown("---")
+
+    # --- SUBIDOR MASIVO DE IMÁGENES CON NOMBRE POR FOTO ---
+    st.header("📸 Subida Masiva de Fotos Nuevas")
+    st.write("Selecciona varias fotos a la vez para una sección y ponle nombre a cada una antes de publicarla en el catálogo.")
+
+    for sec_name, sec_info in datos_actuales["secciones"].items():
+        if not sec_info["activa"]:
+            continue
+
+        contador_key = f"contador_subidor_{sec_name}"
+        if contador_key not in st.session_state:
+            st.session_state[contador_key] = 0
+
+        with st.container(border=True):
+            st.subheader(f"📁 {sec_name}")
+            fotos_subidas = st.file_uploader(
+                f"Arrastra o selecciona las fotos para {sec_name}:",
+                type=["png", "jpg", "jpeg"],
+                accept_multiple_files=True,
+                key=f"masivo_up_{sec_name}_{st.session_state[contador_key]}"
+            )
+
+            if fotos_subidas:
+                st.write(f"**Ponle nombre a cada foto ({len(fotos_subidas)} seleccionadas):**")
+                for idx, foto in enumerate(fotos_subidas):
+                    col_img, col_nombre = st.columns([1, 4])
+                    with col_img:
+                        st.image(foto, width=70)
+                    with col_nombre:
+                        nombre_key = f"nombre_masivo_{sec_name}_{st.session_state[contador_key]}_{idx}_{foto.name}"
+                        st.text_input(
+                            "Nombre del producto",
+                            value=nombre_sugerido_desde_archivo(foto.name),
+                            key=nombre_key,
+                            label_visibility="collapsed",
+                            placeholder="Nombre del producto..."
+                        )
+
+                if st.button(f"💾 Publicar fotos de {sec_name}", key=f"btn_publicar_{sec_name}", type="primary", use_container_width=True):
+                    with st.spinner(f"Subiendo {len(fotos_subidas)} fotos de {sec_name} a la nube..."):
+                        errores = 0
+                        for idx, foto in enumerate(fotos_subidas):
+                            url_nube = subir_imagen_a_nube(foto)
+                            if url_nube:
+                                nombre_key = f"nombre_masivo_{sec_name}_{st.session_state[contador_key]}_{idx}_{foto.name}"
+                                nombre_final = st.session_state.get(nombre_key, "").strip()
+                                if not nombre_final:
+                                    nombre_final = nombre_sugerido_desde_archivo(foto.name)
+                                nuevo_id = max([p["id"] for p in datos_actuales["lista_productos"]], default=0) + 1
+                                datos_actuales["lista_productos"].append({
+                                    "id": nuevo_id,
+                                    "nombre": nombre_final,
+                                    "categoria": sec_name,
+                                    "imagen": url_nube,
+                                    "activo": True,
+                                    "agotado": False
+                                })
+                            else:
+                                errores += 1
+                        guardar_datos(datos_actuales)
+                        st.session_state.mensaje_exito = True
+                        # Cambia el key del uploader para "vaciarlo" y evitar publicar las mismas fotos dos veces
+                        st.session_state[contador_key] += 1
+                        if errores:
+                            st.warning(f"⚠️ {errores} foto(s) no se pudieron subir. Las demás se publicaron correctamente.")
+                        st.rerun()
 
 # ------------------------------------------
 # VISTA 2: ÁREA DEL CLIENTE (URL Normal)
@@ -299,3 +353,4 @@ else:
                     st.link_button("🚀 Consultar Precio en WhatsApp", url_final, type="primary", use_container_width=True)
                 else:
                     st.warning("✍️ Escribe tu nombre para activar el botón de WhatsApp.")
+
