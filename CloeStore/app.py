@@ -8,19 +8,25 @@ import base64
 # ==========================================
 # CONFIGURACIÓN GENERAL Y APIS
 # ==========================================
-NUMERO_WHATSAPP = "50588325774" 
-st.set_page_config(page_title="El mundo de Cloe - Catálogo Oficial", page_icon="🛍️", layout="wide")
-
-# 🔑 Tu llave real de ImgBB integrada directamente
-IMGBB_API_KEY = "1e5fcc62125e29d232617174f88d2e6c" 
+# 🔒 Estos valores ya NO están escritos aquí. Se leen desde Secrets (ver secrets.toml)
+IMGBB_API_KEY = st.secrets.get("IMGBB_API_KEY", "")
+CLAVE_ADMIN = st.secrets.get("CLAVE_ADMIN", "")
 
 DB_FILE = "database.json"
 
-# 🛠️ Logo por defecto (se usa solo si nunca has subido uno desde el panel de admin)
+# 🛠️ Valores por defecto (se usan solo la primera vez, luego todo se edita desde el panel admin)
 LOGO_URL_DEFAULT = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=150"
 
 DEFAULT_DATA = {
     "logo_url": LOGO_URL_DEFAULT,
+    "config": {
+        "nombre_tienda": "El Mundo de Cloe",
+        "eslogan": "Tu Tienda Virtual de Confianza",
+        "numero_whatsapp": "50588325774",
+        "ubicacion": "Isla de Ometepe, Nicaragua",
+        "horario": "Lunes a Sábado: 8 AM - 6 PM",
+        "envios": "Entregas locales garantizadas"
+    },
     "secciones": {
         "Ropa de Niño": {"anuncio": "¡Colección de temporada con 15% de descuento directo! ❄️", "activa": True},
         "Calzado": {"anuncio": "Calzado unisex cómodo para los consentidos del hogar. 👟", "activa": True},
@@ -40,9 +46,14 @@ def cargar_datos():
         return DEFAULT_DATA
     with open(DB_FILE, "r", encoding="utf-8") as f:
         datos = json.load(f)
-    # Compatibilidad: si la base de datos es de antes de tener logo editable
+    # Compatibilidad: si la base de datos es de antes de tener logo/config editables
     if "logo_url" not in datos:
         datos["logo_url"] = LOGO_URL_DEFAULT
+    if "config" not in datos:
+        datos["config"] = DEFAULT_DATA["config"].copy()
+    else:
+        for llave, valor in DEFAULT_DATA["config"].items():
+            datos["config"].setdefault(llave, valor)
     return datos
 
 def guardar_datos(datos):
@@ -82,28 +93,85 @@ def nombre_sugerido_desde_archivo(filename):
 
 datos_actuales = cargar_datos()
 
+st.set_page_config(page_title=f"{datos_actuales['config']['nombre_tienda']} - Catálogo Oficial", page_icon="🛍️", layout="wide")
+
 if "carrito" not in st.session_state:
     st.session_state.carrito = {}
 
 if "mensaje_exito" not in st.session_state:
     st.session_state.mensaje_exito = False
 
-# 🔒 CONTROL DE ACCESO CON STREAMLIT SECRETS
+if "es_admin" not in st.session_state:
+    st.session_state.es_admin = False
+
+# 🔒 CONTROL DE ACCESO: login con contraseña (no se ve en la URL)
+# Para entrar, visita tu página agregando "?admin" al final del enlace, ej:
+# https://tuapp.streamlit.app/?admin
 query_params = st.query_params
-clave_secreta = st.secrets.get("CLAVE_ADMIN", "210825")
-es_admin = query_params.get("admin") == clave_secreta
+solicito_panel_admin = "admin" in query_params
+
+if solicito_panel_admin and not st.session_state.es_admin:
+    st.title("🔒 Acceso al Panel de Administración")
+    if not CLAVE_ADMIN:
+        st.error("⚠️ No se ha configurado CLAVE_ADMIN en Secrets. Revisa la guía de configuración.")
+        st.stop()
+    with st.form("form_login_admin"):
+        clave_ingresada = st.text_input("Clave de administrador:", type="password")
+        entrar = st.form_submit_button("Entrar", type="primary", use_container_width=True)
+    if entrar:
+        if clave_ingresada == CLAVE_ADMIN:
+            st.session_state.es_admin = True
+            st.rerun()
+        else:
+            st.error("❌ Clave incorrecta. Intenta de nuevo.")
+    st.stop()
+
+es_admin = st.session_state.es_admin
 
 # ------------------------------------------
 # VISTA 1: ÁREA DE ADMINISTRACIÓN
 # ------------------------------------------
 if es_admin:
-    st.title("⚙️ Centro de Control CloeStore")
-    st.caption("Panel de administración con carga directa de imágenes a la nube.")
+    col_titulo, col_logout = st.columns([4, 1])
+    with col_titulo:
+        st.title(f"⚙️ Centro de Control {datos_actuales['config']['nombre_tienda']}")
+        st.caption("Panel de administración con carga directa de imágenes a la nube.")
+    with col_logout:
+        st.write("")
+        if st.button("🚪 Cerrar sesión", use_container_width=True):
+            st.session_state.es_admin = False
+            st.rerun()
     st.markdown("---")
     
     if st.session_state.mensaje_exito:
         st.success("💾 ¡CAMBIOS Y FOTOS GUARDADAS CON ÉXITO EN LA NUBE!")
         st.session_state.mensaje_exito = False 
+    
+    # --- CONFIGURACIÓN GENERAL DE LA TIENDA ---
+    st.header("⚙️ Configuración General")
+    st.write("Cambia el nombre, contacto y datos de tu tienda sin tocar el código.")
+    with st.form("form_config_general"):
+        nuevo_nombre = st.text_input("Nombre de la tienda:", value=datos_actuales["config"]["nombre_tienda"])
+        nuevo_eslogan = st.text_input("Eslogan:", value=datos_actuales["config"]["eslogan"])
+        nuevo_whatsapp = st.text_input("Número de WhatsApp (con código de país, sin '+' ni espacios):", value=datos_actuales["config"]["numero_whatsapp"])
+        nueva_ubicacion = st.text_input("📍 Ubicación:", value=datos_actuales["config"]["ubicacion"])
+        nuevo_horario = st.text_input("⏰ Horario de atención:", value=datos_actuales["config"]["horario"])
+        nuevos_envios = st.text_input("🚚 Información de envíos:", value=datos_actuales["config"]["envios"])
+        
+        guardar_config = st.form_submit_button("💾 Guardar Configuración", type="primary", use_container_width=True)
+        
+        if guardar_config:
+            datos_actuales["config"]["nombre_tienda"] = nuevo_nombre.strip() or datos_actuales["config"]["nombre_tienda"]
+            datos_actuales["config"]["eslogan"] = nuevo_eslogan
+            datos_actuales["config"]["numero_whatsapp"] = nuevo_whatsapp.strip()
+            datos_actuales["config"]["ubicacion"] = nueva_ubicacion
+            datos_actuales["config"]["horario"] = nuevo_horario
+            datos_actuales["config"]["envios"] = nuevos_envios
+            guardar_datos(datos_actuales)
+            st.session_state.mensaje_exito = True
+            st.rerun()
+
+    st.markdown("---")
     
     # --- LOGO DE LA TIENDA ---
     st.header("🖼️ Logo de la Tienda")
@@ -308,6 +376,8 @@ if es_admin:
 # VISTA 2: ÁREA DEL CLIENTE (URL Normal)
 # ------------------------------------------
 else:
+    cfg = datos_actuales["config"]
+    
     # 🌟 ESPACIO DE ENCABEZADO PUBLICITARIO E INFORMATIVO
     col_logo, col_info = st.columns([1, 4])
     
@@ -315,17 +385,17 @@ else:
         st.image(datos_actuales.get("logo_url", LOGO_URL_DEFAULT), width=130)
         
     with col_info:
-        st.markdown("<h1 style='margin-bottom: 0px;'>🛍️ El mundo de Cloe</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size: 18px; color: gray; margin-top: 0px;'>Tu Tienda Virtual de Confianza</p>", unsafe_allow_html=True)
+        st.markdown(f"<h1 style='margin-bottom: 0px;'>🛍️ {cfg['nombre_tienda']}</h1>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size: 18px; color: gray; margin-top: 0px;'>{cfg['eslogan']}</p>", unsafe_allow_html=True)
         
         # Detalles informativos organizados
         col_inf_1, col_inf_2, col_inf_3 = st.columns(3)
         with col_inf_1:
-            st.markdown("📍 **Ubicación:**<br>Isla de Ometepe, Nicaragua", unsafe_allow_html=True)
+            st.markdown(f"📍 **Ubicación:**<br>{cfg['ubicacion']}", unsafe_allow_html=True)
         with col_inf_2:
-            st.markdown("⏰ **Atención:**<br>Lunes a Sábado: 8 AM - 6 PM", unsafe_allow_html=True)
+            st.markdown(f"⏰ **Atención:**<br>{cfg['horario']}", unsafe_allow_html=True)
         with col_inf_3:
-            st.markdown("🚚 **Envíos:**<br>Entregas locales garantizadas", unsafe_allow_html=True)
+            st.markdown(f"🚚 **Envíos:**<br>{cfg['envios']}", unsafe_allow_html=True)
 
     st.markdown("---")
     
@@ -385,9 +455,9 @@ else:
                 st.markdown("---")
                 if nombre_cliente:
                     texto_productos = "\n".join(items_mensaje)
-                    mensaje_final = f"¡Hola CloeStore!\n\nMi nombre es *{nombre_cliente}* y estoy interesada en consultar el precio de los siguientes productos para un apartado:\n\n{texto_productos}"
+                    mensaje_final = f"¡Hola {cfg['nombre_tienda']}!\n\nMi nombre es *{nombre_cliente}* y estoy interesada en consultar el precio de los siguientes productos para un apartado:\n\n{texto_productos}"
                     mensaje_codificado = urllib.parse.quote(mensaje_final)
-                    url_final = f"https://wa.me/{NUMERO_WHATSAPP}?text={mensaje_codificado}"
+                    url_final = f"https://wa.me/{cfg['numero_whatsapp']}?text={mensaje_codificado}"
                     st.link_button("🚀 Consultar Precio en WhatsApp", url_final, type="primary", use_container_width=True)
                 else:
                     st.warning("✍️ Escribe tu nombre para activar el botón de WhatsApp.")
