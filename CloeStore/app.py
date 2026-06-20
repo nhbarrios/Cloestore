@@ -113,6 +113,101 @@ def nombre_sugerido_desde_archivo(filename):
     nombre = nombre.replace("_", " ").replace("-", " ")
     return nombre.strip().title()
 
+# ==========================================
+# 🎨 IDENTIDAD VISUAL "EL MUNDO DE CLOE"
+# Paleta tomada directamente del logo: turquesa, coral, amarillo sol y lavanda sobre crema.
+# ==========================================
+COLOR_CREMA = "#FBF6EC"
+COLOR_TURQUESA = "#2EC4C0"
+COLOR_CORAL = "#F2607D"
+COLOR_AMARILLO = "#FFC93C"
+COLOR_LAVANDA = "#B79FD1"
+COLOR_CACAO = "#4A3B31"
+PALETA_SECCIONES = [COLOR_TURQUESA, COLOR_CORAL, COLOR_AMARILLO, COLOR_LAVANDA]
+
+def inyectar_estilos():
+    st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
+
+    html, body, [class*="css"], .stMarkdown, p, span, label {{
+        font-family: 'Nunito', sans-serif;
+    }}
+
+    h1, h2, h3, h4 {{
+        font-family: 'Baloo 2', cursive !important;
+        color: {COLOR_CACAO} !important;
+    }}
+
+    [data-testid="stAppViewContainer"] {{
+        background-color: {COLOR_CREMA};
+    }}
+
+    [data-testid="stImage"] img {{
+        border-radius: 16px;
+    }}
+
+    div[data-testid="stVerticalBlockBorderWrapper"] {{
+        border-radius: 22px !important;
+        border: 2px solid {COLOR_TURQUESA} !important;
+        background-color: #FFFFFF !important;
+        box-shadow: 0px 4px 10px rgba(46,196,192,0.15);
+    }}
+
+    .stButton > button, .stFormSubmitButton > button {{
+        border-radius: 999px !important;
+        font-family: 'Baloo 2', cursive !important;
+        font-weight: 600 !important;
+        border: 2px solid {COLOR_TURQUESA} !important;
+        color: {COLOR_TURQUESA} !important;
+        background-color: #FFFFFF !important;
+    }}
+
+    .stButton > button:hover, .stFormSubmitButton > button:hover {{
+        background-color: #E5FBFA !important;
+    }}
+
+    .stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {{
+        background-color: {COLOR_CORAL} !important;
+        border: 2px solid {COLOR_CORAL} !important;
+        color: #FFFFFF !important;
+    }}
+
+    .stButton > button[kind="primary"]:hover {{
+        background-color: #d94e69 !important;
+        border-color: #d94e69 !important;
+    }}
+
+    .stLinkButton a {{
+        border-radius: 999px !important;
+        font-family: 'Baloo 2', cursive !important;
+        font-weight: 700 !important;
+        background-color: {COLOR_CORAL} !important;
+        border: 2px solid {COLOR_CORAL} !important;
+        color: #FFFFFF !important;
+        justify-content: center !important;
+    }}
+
+    div[data-baseweb="select"] {{
+        border-radius: 14px !important;
+        overflow: hidden;
+    }}
+
+    input, textarea {{
+        border-radius: 12px !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+def pildora_seccion(nombre, color):
+    st.markdown(f"""
+    <div style="display:inline-block; background:{color}; color:#FFFFFF !important;
+                padding:8px 22px; border-radius:999px; font-family:'Baloo 2', cursive;
+                font-weight:700; font-size:20px; margin:4px 0 12px 0;">
+        📁 {nombre}
+    </div>
+    """, unsafe_allow_html=True)
+
 def renderizar_grid_productos(productos):
     """Dibuja una cuadrícula de 3 columnas con las tarjetas de producto."""
     cols_grid = st.columns(3)
@@ -133,6 +228,7 @@ def renderizar_grid_productos(productos):
 datos_actuales = cargar_datos()
 
 st.set_page_config(page_title=f"{datos_actuales['config']['nombre_tienda']} - Catálogo Oficial", page_icon="🛍️", layout="wide")
+inyectar_estilos()
 
 if "carrito" not in st.session_state:
     st.session_state.carrito = {}
@@ -424,17 +520,32 @@ else:
         st.image(datos_actuales.get("logo_url", LOGO_URL_DEFAULT), width=130)
         
     with col_info:
-        st.markdown(f"<h1 style='margin-bottom: 0px;'>🛍️ {cfg['nombre_tienda']}</h1>", unsafe_allow_html=True)
-        st.markdown(f"<p style='font-size: 18px; color: gray; margin-top: 0px;'>{cfg['eslogan']}</p>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, {COLOR_TURQUESA} 0%, #1FA8A4 100%);
+                    border-radius: 22px; padding: 16px 26px; box-shadow: 0px 4px 12px rgba(46,196,192,0.25);">
+            <h1 style="margin:0; color:#FFFFFF !important;">🛍️ {cfg['nombre_tienda']}</h1>
+            <p style="margin:4px 0 0 0; font-size:18px; color:#FFF3DC;">{cfg['eslogan']}</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Detalles informativos organizados
+        st.write("")
         col_inf_1, col_inf_2, col_inf_3 = st.columns(3)
         with col_inf_1:
-            st.markdown(f"📍 **Ubicación:**<br>{cfg['ubicacion']}", unsafe_allow_html=True)
+            st.markdown(f"""<div style="background:#FFFFFF; border:2px solid {COLOR_CORAL}; border-radius:14px; padding:10px 14px;">
+                <span style="font-size:13px; color:#999;">📍 UBICACIÓN</span><br>
+                <span style="font-weight:700; color:{COLOR_CACAO};">{cfg['ubicacion']}</span>
+            </div>""", unsafe_allow_html=True)
         with col_inf_2:
-            st.markdown(f"⏰ **Atención:**<br>{cfg['horario']}", unsafe_allow_html=True)
+            st.markdown(f"""<div style="background:#FFFFFF; border:2px solid {COLOR_AMARILLO}; border-radius:14px; padding:10px 14px;">
+                <span style="font-size:13px; color:#999;">⏰ ATENCIÓN</span><br>
+                <span style="font-weight:700; color:{COLOR_CACAO};">{cfg['horario']}</span>
+            </div>""", unsafe_allow_html=True)
         with col_inf_3:
-            st.markdown(f"🚚 **Envíos:**<br>{cfg['envios']}", unsafe_allow_html=True)
+            st.markdown(f"""<div style="background:#FFFFFF; border:2px solid {COLOR_LAVANDA}; border-radius:14px; padding:10px 14px;">
+                <span style="font-size:13px; color:#999;">🚚 ENVÍOS</span><br>
+                <span style="font-weight:700; color:{COLOR_CACAO};">{cfg['envios']}</span>
+            </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
     
@@ -443,11 +554,13 @@ else:
     if not secciones_activas:
         st.info("Catálogo en mantenimiento por actualización de mercadería. ¡Vuelve pronto!")
     else:
+        color_por_seccion = {nombre: PALETA_SECCIONES[i % len(PALETA_SECCIONES)] for i, nombre in enumerate(secciones_activas)}
         categoria_seleccionada = st.selectbox("🔍 ¿Qué línea deseas explorar hoy?:", ["Todos"] + secciones_activas)
         col_tienda, col_carrito = st.columns([3, 1])
         
         with col_tienda:
             if categoria_seleccionada != "Todos":
+                pildora_seccion(categoria_seleccionada, color_por_seccion[categoria_seleccionada])
                 anuncio_actual = datos_actuales["secciones"][categoria_seleccionada]["anuncio"]
                 if anuncio_actual:
                     st.info(f"📢 {anuncio_actual}")
@@ -471,7 +584,7 @@ else:
                         continue
 
                     hubo_contenido = True
-                    st.subheader(f"📁 {sec_name}")
+                    pildora_seccion(sec_name, color_por_seccion[sec_name])
                     anuncio_sec = datos_actuales["secciones"][sec_name]["anuncio"]
                     if anuncio_sec:
                         st.caption(f"📢 {anuncio_sec}")
