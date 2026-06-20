@@ -31,6 +31,8 @@ DEFAULT_DATA = {
         "envios": "Entregas locales garantizadas",
         "facebook": "",
         "tiktok": "",
+        "instagram": "",
+        "x": "",
         "correo": ""
     },
     "secciones": {},
@@ -211,6 +213,19 @@ def pildora_seccion(nombre, color):
     </div>
     """, unsafe_allow_html=True)
 
+def boton_red_social(etiqueta, url, color_fondo, icono_slug=None):
+    """Genera un botón tipo píldora. Si se da icono_slug, usa el logo oficial de la marca (vía Simple Icons)."""
+    icono_html = ""
+    if icono_slug:
+        icono_html = f'<img src="https://cdn.simpleicons.org/{icono_slug}/FFFFFF" width="18" style="vertical-align:middle; margin-right:8px;">'
+    return f"""
+    <a href="{url}" target="_blank" style="display:block; text-align:center; background:{color_fondo};
+       color:#FFFFFF !important; padding:9px 10px; border-radius:999px; font-family:'Baloo 2', cursive;
+       font-weight:700; text-decoration:none; font-size:15px;">
+       {icono_html}{etiqueta}
+    </a>
+    """
+
 def renderizar_grid_productos(productos):
     """Dibuja una cuadrícula de 3 columnas con las tarjetas de producto."""
     cols_grid = st.columns(3)
@@ -298,7 +313,9 @@ if es_admin:
         
         st.markdown("**🔗 Redes sociales y contacto** (déjalos vacíos si todavía no los tienes — el botón solo aparece en la tienda cuando hay un enlace)")
         nuevo_facebook = st.text_input("📘 Enlace de Facebook:", value=datos_actuales["config"].get("facebook", ""), placeholder="https://facebook.com/tu_pagina")
+        nuevo_instagram = st.text_input("📸 Enlace de Instagram:", value=datos_actuales["config"].get("instagram", ""), placeholder="https://instagram.com/tu_cuenta")
         nuevo_tiktok = st.text_input("🎵 Enlace de TikTok:", value=datos_actuales["config"].get("tiktok", ""), placeholder="https://tiktok.com/@tu_cuenta")
+        nuevo_x = st.text_input("✖️ Enlace de X (Twitter):", value=datos_actuales["config"].get("x", ""), placeholder="https://x.com/tu_cuenta")
         nuevo_correo = st.text_input("✉️ Correo electrónico:", value=datos_actuales["config"].get("correo", ""), placeholder="tutienda@correo.com")
         
         guardar_config = st.form_submit_button("💾 Guardar Configuración", type="primary", use_container_width=True)
@@ -311,7 +328,9 @@ if es_admin:
             datos_actuales["config"]["horario"] = nuevo_horario
             datos_actuales["config"]["envios"] = nuevos_envios
             datos_actuales["config"]["facebook"] = nuevo_facebook.strip()
+            datos_actuales["config"]["instagram"] = nuevo_instagram.strip()
             datos_actuales["config"]["tiktok"] = nuevo_tiktok.strip()
+            datos_actuales["config"]["x"] = nuevo_x.strip()
             datos_actuales["config"]["correo"] = nuevo_correo.strip()
             guardar_datos(datos_actuales)
             st.session_state.mensaje_exito = True
@@ -561,26 +580,24 @@ else:
         # 🔗 Redes sociales y contacto directo (solo se muestran si ya las configuraste)
         enlaces_contacto = []
         if cfg.get("facebook"):
-            enlaces_contacto.append(("📘 Facebook", cfg["facebook"], "#1877F2"))
+            enlaces_contacto.append(("Facebook", cfg["facebook"], "#1877F2", "facebook"))
+        if cfg.get("instagram"):
+            enlaces_contacto.append(("Instagram", cfg["instagram"], "#E1306C", "instagram"))
         if cfg.get("tiktok"):
-            enlaces_contacto.append(("🎵 TikTok", cfg["tiktok"], "#000000"))
+            enlaces_contacto.append(("TikTok", cfg["tiktok"], "#000000", "tiktok"))
+        if cfg.get("x"):
+            enlaces_contacto.append(("X", cfg["x"], "#000000", "x"))
         if cfg.get("numero_whatsapp"):
-            enlaces_contacto.append(("💬 WhatsApp", f"https://wa.me/{cfg['numero_whatsapp']}", "#25D366"))
+            enlaces_contacto.append(("WhatsApp", f"https://wa.me/{cfg['numero_whatsapp']}", "#25D366", "whatsapp"))
         if cfg.get("correo"):
-            enlaces_contacto.append(("✉️ Correo", f"mailto:{cfg['correo']}", COLOR_LAVANDA))
+            enlaces_contacto.append(("Correo", f"mailto:{cfg['correo']}", COLOR_LAVANDA, None))
 
         if enlaces_contacto:
             st.write("")
             cols_enlaces = st.columns(len(enlaces_contacto))
-            for col_enlace, (etiqueta, url, color) in zip(cols_enlaces, enlaces_contacto):
+            for col_enlace, (etiqueta, url, color, slug) in zip(cols_enlaces, enlaces_contacto):
                 with col_enlace:
-                    st.markdown(f"""
-                    <a href="{url}" target="_blank" style="display:block; text-align:center; background:{color};
-                       color:#FFFFFF !important; padding:8px 10px; border-radius:999px; font-family:'Baloo 2', cursive;
-                       font-weight:700; text-decoration:none; font-size:15px;">
-                       {etiqueta}
-                    </a>
-                    """, unsafe_allow_html=True)
+                    st.markdown(boton_red_social(etiqueta, url, color, slug), unsafe_allow_html=True)
 
     st.markdown("---")
     
