@@ -12,7 +12,10 @@ import base64
 IMGBB_API_KEY = st.secrets.get("IMGBB_API_KEY", "")
 CLAVE_ADMIN = st.secrets.get("CLAVE_ADMIN", "")
 
-DB_FILE = "database.json"
+# 🗄️ Base de datos en la nube (JSONBin.io) — así tus datos NO se borran al reiniciarse el servidor
+JSONBIN_API_KEY = st.secrets.get("JSONBIN_API_KEY", "")
+JSONBIN_BIN_ID = st.secrets.get("JSONBIN_BIN_ID", "")
+JSONBIN_URL = f"https://api.jsonbin.io/v3/b/{JSONBIN_BIN_ID}"
 
 # 🛠️ Valores por defecto (se usan solo la primera vez, luego todo se edita desde el panel admin)
 LOGO_URL_DEFAULT = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=150"
@@ -27,38 +30,57 @@ DEFAULT_DATA = {
         "horario": "Lunes a Sábado: 8 AM - 6 PM",
         "envios": "Entregas locales garantizadas"
     },
-    "secciones": {
-        "Ropa de Niño": {"anuncio": "¡Colección de temporada con 15% de descuento directo! ❄️", "activa": True},
-        "Calzado": {"anuncio": "Calzado unisex cómodo para los consentidos del hogar. 👟", "activa": True},
-        "Bisutería y Accesorios": {"anuncio": "Prendas delicadas para resaltar tu estilo diario. ✨", "activa": True}
-    },
-    "lista_productos": [
-        {"id": 1, "nombre": "Conjunto Infantil Unisex - Algodón Premium", "categoria": "Ropa de Niño", "imagen": "https://images.unsplash.com/photo-1519704943960-ab388d5904ca?w=500", "activo": True, "agotado": False},
-        {"id": 2, "nombre": "Zapatos Deportivos Blandos para Bebé", "categoria": "Calzado", "imagen": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500", "activo": True, "agotado": False},
-        {"id": 3, "nombre": "Pulsera Ajustable de Bisutería Artesanal", "categoria": "Bisutería y Accesorios", "imagen": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500", "activo": True, "agotado": True}
-    ]
+    "secciones": {},
+    "lista_productos": []
 }
 
 def cargar_datos():
-    if not os.path.exists(DB_FILE):
-        with open(DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(DEFAULT_DATA, f, ensure_ascii=False, indent=4)
-        return DEFAULT_DATA
-    with open(DB_FILE, "r", encoding="utf-8") as f:
-        datos = json.load(f)
-    # Compatibilidad: si la base de datos es de antes de tener logo/config editables
+    if not JSONBIN_API_KEY or not JSONBIN_BIN_ID:
+        st.error("⚠️ Falta configurar JSONBIN_API_KEY y JSONBIN_BIN_ID en Secrets. Revisa la guía de configuración que te dieron.")
+        st.stop()
+
+    try:
+        res = requests.get(f"{JSONBIN_URL}/latest", headers={"X-Master-Key": JSONBIN_API_KEY}, timeout=10)
+        datos = res.json().get("record", {}) if res.status_code == 200 else {}
+    except Exception as e:
+        st.error(f"⚠️ No se pudo conectar con la base de datos en la nube: {e}")
+        st.stop()
+
+    # Si faltan llaves (primera vez, o un bin vacío) se completan con los valores por defecto
+    cambios_pendientes = False
     if "logo_url" not in datos:
         datos["logo_url"] = LOGO_URL_DEFAULT
+        cambios_pendientes = True
     if "config" not in datos:
         datos["config"] = DEFAULT_DATA["config"].copy()
+        cambios_pendientes = True
     else:
         for llave, valor in DEFAULT_DATA["config"].items():
-            datos["config"].setdefault(llave, valor)
+            if llave not in datos["config"]:
+                datos["config"][llave] = valor
+                cambios_pendientes = True
+    if "secciones" not in datos:
+        datos["secciones"] = {}
+        cambios_pendientes = True
+    if "lista_productos" not in datos:
+        datos["lista_productos"] = []
+        cambios_pendientes = True
+
+    if cambios_pendientes:
+        guardar_datos(datos)
+
     return datos
 
 def guardar_datos(datos):
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(datos, f, ensure_ascii=False, indent=4)
+    try:
+        requests.put(
+            JSONBIN_URL,
+            json=datos,
+            headers={"X-Master-Key": JSONBIN_API_KEY, "Content-Type": "application/json"},
+            timeout=10
+        )
+    except Exception as e:
+        st.error(f"⚠️ No se pudieron guardar los cambios en la nube: {e}")
 
 def subir_imagen_a_nube(file_buffer):
     """Sube la imagen a ImgBB y devuelve la URL pública permanente."""
@@ -90,6 +112,23 @@ def nombre_sugerido_desde_archivo(filename):
     nombre = os.path.splitext(filename)[0]
     nombre = nombre.replace("_", " ").replace("-", " ")
     return nombre.strip().title()
+
+def renderizar_grid_productos(productos):
+    """Dibuja una cuadrícula de 3 columnas con las tarjetas de producto."""
+    cols_grid = st.columns(3)
+    for idx, prod in enumerate(productos):
+        with cols_grid[idx % 3]:
+            st.image(prod["imagen"], use_container_width=True)
+            st.subheader(prod["nombre"])
+            st.caption(f"Línea: {prod['categoria']}")
+
+            if prod["agotado"]:
+                st.button("❌ Agotado temporalmente", key=f"btn_ago_{prod['id']}", disabled=True, use_container_width=True)
+            else:
+                if st.button("➕ Agregar para consultar", key=f"add_{prod['id']}", use_container_width=True):
+                    st.session_state.carrito[prod["id"]] = prod["nombre"]
+                    st.toast(f"Agregado: {prod['nombre']}")
+            st.write("")
 
 datos_actuales = cargar_datos()
 
@@ -412,29 +451,36 @@ else:
                 anuncio_actual = datos_actuales["secciones"][categoria_seleccionada]["anuncio"]
                 if anuncio_actual:
                     st.info(f"📢 {anuncio_actual}")
-                    
-            cols_grid = st.columns(3)
-            col_idx = 0
-            
-            for prod in datos_actuales["lista_productos"]:
-                if not prod["activo"] or prod["categoria"] not in secciones_activas:
-                    continue
-                if categoria_seleccionada != "Todos" and prod["categoria"] != categoria_seleccionada:
-                    continue
-                    
-                with cols_grid[col_idx % 3]:
-                    st.image(prod["imagen"], use_container_width=True)
-                    st.subheader(prod["nombre"])
-                    st.caption(f"Línea: {prod['categoria']}")
-                    
-                    if prod["agotado"]:
-                        st.button("❌ Agotado temporalmente", key=f"btn_ago_{prod['id']}", disabled=True, use_container_width=True)
-                    else:
-                        if st.button("➕ Agregar para consultar", key=f"add_{prod['id']}", use_container_width=True):
-                            st.session_state.carrito[prod["id"]] = prod["nombre"]
-                            st.toast(f"Agregado: {prod['nombre']}")
-                    st.write("")
-                    col_idx += 1
+
+                productos_a_mostrar = [
+                    p for p in datos_actuales["lista_productos"]
+                    if p["activo"] and p["categoria"] == categoria_seleccionada
+                ]
+                if not productos_a_mostrar:
+                    st.info("Todavía no hay artículos visibles en esta sección.")
+                else:
+                    renderizar_grid_productos(productos_a_mostrar)
+            else:
+                hubo_contenido = False
+                for sec_name in secciones_activas:
+                    productos_sec = [
+                        p for p in datos_actuales["lista_productos"]
+                        if p["activo"] and p["categoria"] == sec_name
+                    ]
+                    if not productos_sec:
+                        continue
+
+                    hubo_contenido = True
+                    st.subheader(f"📁 {sec_name}")
+                    anuncio_sec = datos_actuales["secciones"][sec_name]["anuncio"]
+                    if anuncio_sec:
+                        st.caption(f"📢 {anuncio_sec}")
+
+                    renderizar_grid_productos(productos_sec)
+                    st.markdown("---")
+
+                if not hubo_contenido:
+                    st.info("Todavía no hay artículos visibles en el catálogo.")
                     
         with col_carrito:
             st.subheader("🛒 Tu Consulta")
