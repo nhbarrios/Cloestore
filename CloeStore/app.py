@@ -28,7 +28,10 @@ DEFAULT_DATA = {
         "numero_whatsapp": "50588325774",
         "ubicacion": "Isla de Ometepe, Nicaragua",
         "horario": "Lunes a Sábado: 8 AM - 6 PM",
-        "envios": "Entregas locales garantizadas"
+        "envios": "Entregas locales garantizadas",
+        "facebook": "",
+        "tiktok": "",
+        "correo": ""
     },
     "secciones": {},
     "lista_productos": []
@@ -293,6 +296,11 @@ if es_admin:
         nuevo_horario = st.text_input("⏰ Horario de atención:", value=datos_actuales["config"]["horario"])
         nuevos_envios = st.text_input("🚚 Información de envíos:", value=datos_actuales["config"]["envios"])
         
+        st.markdown("**🔗 Redes sociales y contacto** (déjalos vacíos si todavía no los tienes — el botón solo aparece en la tienda cuando hay un enlace)")
+        nuevo_facebook = st.text_input("📘 Enlace de Facebook:", value=datos_actuales["config"].get("facebook", ""), placeholder="https://facebook.com/tu_pagina")
+        nuevo_tiktok = st.text_input("🎵 Enlace de TikTok:", value=datos_actuales["config"].get("tiktok", ""), placeholder="https://tiktok.com/@tu_cuenta")
+        nuevo_correo = st.text_input("✉️ Correo electrónico:", value=datos_actuales["config"].get("correo", ""), placeholder="tutienda@correo.com")
+        
         guardar_config = st.form_submit_button("💾 Guardar Configuración", type="primary", use_container_width=True)
         
         if guardar_config:
@@ -302,6 +310,9 @@ if es_admin:
             datos_actuales["config"]["ubicacion"] = nueva_ubicacion
             datos_actuales["config"]["horario"] = nuevo_horario
             datos_actuales["config"]["envios"] = nuevos_envios
+            datos_actuales["config"]["facebook"] = nuevo_facebook.strip()
+            datos_actuales["config"]["tiktok"] = nuevo_tiktok.strip()
+            datos_actuales["config"]["correo"] = nuevo_correo.strip()
             guardar_datos(datos_actuales)
             st.session_state.mensaje_exito = True
             st.rerun()
@@ -546,6 +557,30 @@ else:
                 <span style="font-size:13px; color:#999;">🚚 ENVÍOS</span><br>
                 <span style="font-weight:700; color:{COLOR_CACAO};">{cfg['envios']}</span>
             </div>""", unsafe_allow_html=True)
+
+        # 🔗 Redes sociales y contacto directo (solo se muestran si ya las configuraste)
+        enlaces_contacto = []
+        if cfg.get("facebook"):
+            enlaces_contacto.append(("📘 Facebook", cfg["facebook"], "#1877F2"))
+        if cfg.get("tiktok"):
+            enlaces_contacto.append(("🎵 TikTok", cfg["tiktok"], "#000000"))
+        if cfg.get("numero_whatsapp"):
+            enlaces_contacto.append(("💬 WhatsApp", f"https://wa.me/{cfg['numero_whatsapp']}", "#25D366"))
+        if cfg.get("correo"):
+            enlaces_contacto.append(("✉️ Correo", f"mailto:{cfg['correo']}", COLOR_LAVANDA))
+
+        if enlaces_contacto:
+            st.write("")
+            cols_enlaces = st.columns(len(enlaces_contacto))
+            for col_enlace, (etiqueta, url, color) in zip(cols_enlaces, enlaces_contacto):
+                with col_enlace:
+                    st.markdown(f"""
+                    <a href="{url}" target="_blank" style="display:block; text-align:center; background:{color};
+                       color:#FFFFFF !important; padding:8px 10px; border-radius:999px; font-family:'Baloo 2', cursive;
+                       font-weight:700; text-decoration:none; font-size:15px;">
+                       {etiqueta}
+                    </a>
+                    """, unsafe_allow_html=True)
 
     st.markdown("---")
     
