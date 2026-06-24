@@ -483,8 +483,7 @@ def renderizar_grid_productos(productos):
                 <img src="{prod['imagen']}" alt="{prod['nombre']}"
                      loading="lazy"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                     onload="this.style.opacity='1';"
-                     style="opacity:0; transition:opacity 0.4s ease;" />
+                     style="opacity:1;" />
                 <div class="skeleton-img" style="display:none;"></div>
             </div>
             <div class="producto-card-body">
