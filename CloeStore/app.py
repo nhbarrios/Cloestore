@@ -463,71 +463,37 @@ def boton_red_social(etiqueta, url, color_fondo, icono_slug=None):
     """
 
 def renderizar_grid_productos(productos):
-    """Dibuja una cuadrícula de 3 columnas con tarjetas animadas de producto."""
-    # Generamos el HTML de todas las tarjetas en una sola inyección para
-    # poder usar las clases CSS/JS de animación que definimos en inyectar_estilos()
-    tarjetas_html = '<div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:18px; padding: 4px 0 12px;">'
+    """Dibuja una cuadrícula de 3 columnas usando st.image() nativo para garantizar
+    que las imágenes de ImgBB carguen correctamente en Streamlit Cloud."""
+    COLS = 3
+    filas = [productos[i:i+COLS] for i in range(0, len(productos), COLS)]
 
-    for prod in productos:
-        if prod["agotado"]:
-            btn_html = f'<div class="producto-card-btn agotado">❌ Agotado</div>'
-        else:
-            # El onclick manda un mensaje especial que Streamlit NO escucha —
-            # por eso debajo del grid seguimos poniendo st.button ocultos para
-            # que la lógica del carrito siga funcionando igual que antes.
-            btn_html = f'<div class="producto-card-btn" onclick="document.getElementById(\'cloe_add_{prod["id"]}\').click()">➕ Agregar</div>'
+    for fila in filas:
+        cols = st.columns(COLS)
+        for col, prod in zip(cols, fila):
+            with col:
+                with st.container(border=False):
+                    # st.image() nativo: siempre carga URLs externas correctamente
+                    try:
+                        st.image(prod["imagen"], use_container_width=True)
+                    except Exception:
+                        st.markdown('<div class="skeleton-img"></div>', unsafe_allow_html=True)
 
-        tarjetas_html += f"""
-        <div class="producto-card" id="card_{prod['id']}">
-            <div style="overflow:hidden; border-radius:18px 18px 0 0;">
-                <img src="{prod['imagen']}" alt="{prod['nombre']}"
-                     loading="lazy"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                     style="opacity:1;" />
-                <div class="skeleton-img" style="display:none;"></div>
-            </div>
-            <div class="producto-card-body">
-                <p class="producto-card-nombre">{prod['nombre']}</p>
-                <p class="producto-card-linea">Línea: {prod['categoria']}</p>
-                {btn_html}
-            </div>
-        </div>
-        """
+                    # Nombre y línea
+                    st.markdown(f"""
+                    <div style="padding:4px 2px 6px;">
+                        <p class="producto-card-nombre">{prod['nombre']}</p>
+                        <p class="producto-card-linea">Línea: {prod['categoria']}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-    tarjetas_html += "</div>"
-    st.markdown(tarjetas_html, unsafe_allow_html=True)
-
-    # Botones reales de Streamlit (ocultos visualmente) para que el carrito funcione
-    # El JS de cada tarjeta los activa haciendo click programático
-    for prod in productos:
-        if not prod["agotado"]:
-            btn_key = f"add_{prod['id']}"
-            with st.container():
-                st.markdown(f'<div style="display:none" id="wrapper_cloe_add_{prod["id"]}">', unsafe_allow_html=True)
-                if st.button("add", key=btn_key, help=prod["nombre"]):
-                    st.session_state.carrito[prod["id"]] = prod["nombre"]
-                    st.toast(f"✅ Agregado: {prod['nombre']}")
-                st.markdown('</div>', unsafe_allow_html=True)
-
-    # Script que conecta el botón visual con el botón real de Streamlit
-    st.markdown("""
-    <script>
-    (function patchBotones() {
-        document.querySelectorAll('.producto-card-btn:not(.agotado)').forEach(function(btn) {
-            var match = btn.getAttribute('onclick') && btn.getAttribute('onclick').match(/cloe_add_(\\d+)/);
-            if (!match) return;
-            var id = match[1];
-            btn.addEventListener('click', function() {
-                // Busca el botón real de Streamlit que tiene el texto "add" y el key correcto
-                var allBtns = document.querySelectorAll('button');
-                for (var b of allBtns) {
-                    if (b.closest('#wrapper_cloe_add_' + id)) { b.click(); break; }
-                }
-            });
-        });
-    })();
-    </script>
-    """, unsafe_allow_html=True)
+                    # Botón agregar o agotado
+                    if prod.get("agotado"):
+                        st.markdown('<div class="producto-card-btn agotado">❌ Agotado</div>', unsafe_allow_html=True)
+                    else:
+                        if st.button("➕ Agregar", key=f"add_{prod['id']}", use_container_width=True):
+                            st.session_state.carrito[prod["id"]] = prod["nombre"]
+                            st.toast(f"✅ Agregado: {prod['nombre']}")
 
 datos_actuales = cargar_datos()
 
