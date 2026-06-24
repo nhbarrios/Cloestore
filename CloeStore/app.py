@@ -166,10 +166,15 @@ def inyectar_estilos():
         border: 2px solid {COLOR_TURQUESA} !important;
         color: {COLOR_TURQUESA} !important;
         background-color: #FFFFFF !important;
+        transition: all 0.25s ease !important;
+        position: relative !important;
+        overflow: hidden !important;
     }}
 
     .stButton > button:hover, .stFormSubmitButton > button:hover {{
         background-color: #E5FBFA !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 18px rgba(46,196,192,0.3) !important;
     }}
 
     .stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {{
@@ -181,6 +186,8 @@ def inyectar_estilos():
     .stButton > button[kind="primary"]:hover {{
         background-color: #d94e69 !important;
         border-color: #d94e69 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 18px rgba(242,96,125,0.35) !important;
     }}
 
     .stLinkButton a {{
@@ -191,6 +198,12 @@ def inyectar_estilos():
         border: 2px solid {COLOR_CORAL} !important;
         color: #FFFFFF !important;
         justify-content: center !important;
+        transition: all 0.25s ease !important;
+    }}
+
+    .stLinkButton a:hover {{
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 18px rgba(242,96,125,0.35) !important;
     }}
 
     div[data-baseweb="select"] {{
@@ -201,15 +214,238 @@ def inyectar_estilos():
     input, textarea {{
         border-radius: 12px !important;
     }}
+
+    /* ── TARJETAS DE PRODUCTO ── */
+    .producto-card {{
+        background: #FFFFFF;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 2px solid rgba(46,196,192,0.25);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+        transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1),
+                    box-shadow 0.35s ease;
+        margin-bottom: 18px;
+        /* Scroll-reveal: empieza invisible y bajada */
+        opacity: 0;
+        transform: translateY(36px);
+    }}
+
+    .producto-card.visible {{
+        opacity: 1;
+        transform: translateY(0);
+    }}
+
+    .producto-card:hover {{
+        transform: translateY(-6px) scale(1.02) !important;
+        box-shadow: 0 16px 36px rgba(46,196,192,0.22) !important;
+        border-color: {COLOR_TURQUESA} !important;
+    }}
+
+    .producto-card img {{
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.45s ease;
+    }}
+
+    .producto-card:hover img {{
+        transform: scale(1.06);
+    }}
+
+    .producto-card-body {{
+        padding: 12px 14px 14px;
+    }}
+
+    .producto-card-nombre {{
+        font-family: 'Baloo 2', cursive;
+        font-weight: 700;
+        font-size: 15px;
+        color: {COLOR_CACAO};
+        margin: 0 0 2px 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }}
+
+    .producto-card-linea {{
+        font-size: 12px;
+        color: #AAA;
+        margin: 0 0 10px 0;
+    }}
+
+    .producto-card-btn {{
+        display: block;
+        width: 100%;
+        padding: 9px 0;
+        text-align: center;
+        border-radius: 999px;
+        font-family: 'Baloo 2', cursive;
+        font-weight: 700;
+        font-size: 14px;
+        border: 2px solid {COLOR_TURQUESA};
+        color: {COLOR_TURQUESA};
+        background: #FFFFFF;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }}
+
+    .producto-card-btn:hover {{
+        background: {COLOR_TURQUESA};
+        color: #FFFFFF;
+        box-shadow: 0 4px 14px rgba(46,196,192,0.4);
+    }}
+
+    .producto-card-btn.agotado {{
+        border-color: #DDD;
+        color: #BBB;
+        cursor: not-allowed;
+    }}
+
+    /* ── RIPPLE en botones ── */
+    .ripple {{
+        position: absolute;
+        border-radius: 50%;
+        transform: scale(0);
+        animation: ripple-anim 0.55s linear;
+        background: rgba(255,255,255,0.45);
+        pointer-events: none;
+    }}
+
+    @keyframes ripple-anim {{
+        to {{ transform: scale(4); opacity: 0; }}
+    }}
+
+    /* ── BANNER HERO animado ── */
+    @keyframes hero-shimmer {{
+        0%   {{ background-position: 0% 50%; }}
+        50%  {{ background-position: 100% 50%; }}
+        100% {{ background-position: 0% 50%; }}
+    }}
+
+    .hero-banner {{
+        background: linear-gradient(135deg, {COLOR_TURQUESA}, #1FA8A4, {COLOR_CORAL}, {COLOR_TURQUESA});
+        background-size: 300% 300%;
+        animation: hero-shimmer 8s ease infinite;
+        border-radius: 22px;
+        padding: 18px 26px;
+        box-shadow: 0 4px 18px rgba(46,196,192,0.3);
+    }}
+
+    .hero-banner h1 {{
+        margin: 0;
+        color: #FFFFFF !important;
+        font-size: clamp(22px, 4vw, 32px);
+    }}
+
+    .hero-banner p {{
+        margin: 4px 0 0 0;
+        font-size: 17px;
+        color: #FFF3DC;
+    }}
+
+    /* ── SKELETON loader para imágenes ── */
+    @keyframes skeleton-pulse {{
+        0%   {{ background-position: -400px 0; }}
+        100% {{ background-position: 400px 0; }}
+    }}
+
+    .skeleton-img {{
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        background: linear-gradient(90deg, #EEE 25%, #F8F8F8 50%, #EEE 75%);
+        background-size: 800px 100%;
+        animation: skeleton-pulse 1.4s infinite linear;
+        border-radius: 12px;
+    }}
+
+    /* ── SECCIÓN TÍTULO con borde decorativo animado ── */
+    .seccion-titulo {{
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(90deg, rgba(46,196,192,0.12), transparent);
+        border-left: 5px solid {COLOR_TURQUESA};
+        border-radius: 0 999px 999px 0;
+        padding: 8px 22px 8px 16px;
+        margin: 12px 0;
+    }}
+
+    .seccion-titulo span {{
+        font-family: 'Baloo 2', cursive;
+        font-weight: 800;
+        font-size: 20px;
+        color: {COLOR_CACAO};
+    }}
+
+    /* ── Info cards con hover suave ── */
+    .info-card {{
+        background: #FFFFFF;
+        border-radius: 14px;
+        padding: 10px 14px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }}
+
+    .info-card:hover {{
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }}
+
     </style>
+
+    <script>
+    // ── SCROLL REVEAL con IntersectionObserver ──
+    (function() {{
+        function initReveal() {{
+            var cards = document.querySelectorAll('.producto-card');
+            if (!cards.length) {{ setTimeout(initReveal, 500); return; }}
+
+            var observer = new IntersectionObserver(function(entries) {{
+                entries.forEach(function(entry, i) {{
+                    if (entry.isIntersecting) {{
+                        // Stagger: cada tarjeta se anima con un pequeño delay
+                        setTimeout(function() {{
+                            entry.target.classList.add('visible');
+                        }}, i * 80);
+                        observer.unobserve(entry.target);
+                    }}
+                }});
+            }}, {{ threshold: 0.12 }});
+
+            cards.forEach(function(card) {{ observer.observe(card); }});
+        }}
+        document.addEventListener('DOMContentLoaded', function() {{ setTimeout(initReveal, 800); }});
+
+        // Re-observar cuando Streamlit re-renderiza
+        var mo = new MutationObserver(function() {{ setTimeout(initReveal, 400); }});
+        mo.observe(document.body, {{ childList: true, subtree: true }});
+    }})();
+
+    // ── RIPPLE en botones .producto-card-btn ──
+    document.addEventListener('click', function(e) {{
+        var btn = e.target.closest('.producto-card-btn');
+        if (!btn || btn.classList.contains('agotado')) return;
+        var circle = document.createElement('span');
+        var d = Math.max(btn.clientWidth, btn.clientHeight);
+        var rect = btn.getBoundingClientRect();
+        circle.className = 'ripple';
+        circle.style.width = circle.style.height = d + 'px';
+        circle.style.left = (e.clientX - rect.left - d/2) + 'px';
+        circle.style.top  = (e.clientY - rect.top  - d/2) + 'px';
+        btn.appendChild(circle);
+        setTimeout(function() {{ circle.remove(); }}, 600);
+    }});
+    </script>
     """, unsafe_allow_html=True)
 
 def pildora_seccion(nombre, color):
     st.markdown(f"""
-    <div style="display:inline-block; background:{color}; color:#FFFFFF !important;
-                padding:8px 22px; border-radius:999px; font-family:'Baloo 2', cursive;
-                font-weight:700; font-size:20px; margin:4px 0 12px 0;">
-        📁 {nombre}
+    <div class="seccion-titulo">
+        <div style="width:12px; height:12px; border-radius:50%; background:{color}; 
+                    box-shadow: 0 0 0 4px {color}33; flex-shrink:0;"></div>
+        <span>{nombre}</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -227,21 +463,72 @@ def boton_red_social(etiqueta, url, color_fondo, icono_slug=None):
     """
 
 def renderizar_grid_productos(productos):
-    """Dibuja una cuadrícula de 3 columnas con las tarjetas de producto."""
-    cols_grid = st.columns(3)
-    for idx, prod in enumerate(productos):
-        with cols_grid[idx % 3]:
-            st.image(prod["imagen"], use_container_width=True)
-            st.subheader(prod["nombre"])
-            st.caption(f"Línea: {prod['categoria']}")
+    """Dibuja una cuadrícula de 3 columnas con tarjetas animadas de producto."""
+    # Generamos el HTML de todas las tarjetas en una sola inyección para
+    # poder usar las clases CSS/JS de animación que definimos en inyectar_estilos()
+    tarjetas_html = '<div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:18px; padding: 4px 0 12px;">'
 
-            if prod["agotado"]:
-                st.button("❌ Agotado temporalmente", key=f"btn_ago_{prod['id']}", disabled=True, use_container_width=True)
-            else:
-                if st.button("➕ Agregar para consultar", key=f"add_{prod['id']}", use_container_width=True):
+    for prod in productos:
+        if prod["agotado"]:
+            btn_html = f'<div class="producto-card-btn agotado">❌ Agotado</div>'
+        else:
+            # El onclick manda un mensaje especial que Streamlit NO escucha —
+            # por eso debajo del grid seguimos poniendo st.button ocultos para
+            # que la lógica del carrito siga funcionando igual que antes.
+            btn_html = f'<div class="producto-card-btn" onclick="document.getElementById(\'cloe_add_{prod["id"]}\').click()">➕ Agregar</div>'
+
+        tarjetas_html += f"""
+        <div class="producto-card" id="card_{prod['id']}">
+            <div style="overflow:hidden; border-radius:18px 18px 0 0;">
+                <img src="{prod['imagen']}" alt="{prod['nombre']}"
+                     loading="lazy"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+                     onload="this.style.opacity='1';"
+                     style="opacity:0; transition:opacity 0.4s ease;" />
+                <div class="skeleton-img" style="display:none;"></div>
+            </div>
+            <div class="producto-card-body">
+                <p class="producto-card-nombre">{prod['nombre']}</p>
+                <p class="producto-card-linea">Línea: {prod['categoria']}</p>
+                {btn_html}
+            </div>
+        </div>
+        """
+
+    tarjetas_html += "</div>"
+    st.markdown(tarjetas_html, unsafe_allow_html=True)
+
+    # Botones reales de Streamlit (ocultos visualmente) para que el carrito funcione
+    # El JS de cada tarjeta los activa haciendo click programático
+    for prod in productos:
+        if not prod["agotado"]:
+            btn_key = f"add_{prod['id']}"
+            with st.container():
+                st.markdown(f'<div style="display:none" id="wrapper_cloe_add_{prod["id"]}">', unsafe_allow_html=True)
+                if st.button("add", key=btn_key, help=prod["nombre"]):
                     st.session_state.carrito[prod["id"]] = prod["nombre"]
-                    st.toast(f"Agregado: {prod['nombre']}")
-            st.write("")
+                    st.toast(f"✅ Agregado: {prod['nombre']}")
+                st.markdown('</div>', unsafe_allow_html=True)
+
+    # Script que conecta el botón visual con el botón real de Streamlit
+    st.markdown("""
+    <script>
+    (function patchBotones() {
+        document.querySelectorAll('.producto-card-btn:not(.agotado)').forEach(function(btn) {
+            var match = btn.getAttribute('onclick') && btn.getAttribute('onclick').match(/cloe_add_(\\d+)/);
+            if (!match) return;
+            var id = match[1];
+            btn.addEventListener('click', function() {
+                // Busca el botón real de Streamlit que tiene el texto "add" y el key correcto
+                var allBtns = document.querySelectorAll('button');
+                for (var b of allBtns) {
+                    if (b.closest('#wrapper_cloe_add_' + id)) { b.click(); break; }
+                }
+            });
+        });
+    })();
+    </script>
+    """, unsafe_allow_html=True)
 
 datos_actuales = cargar_datos()
 
@@ -551,10 +838,9 @@ else:
         
     with col_info:
         st.markdown(f"""
-        <div style="background: linear-gradient(135deg, {COLOR_TURQUESA} 0%, #1FA8A4 100%);
-                    border-radius: 22px; padding: 16px 26px; box-shadow: 0px 4px 12px rgba(46,196,192,0.25);">
-            <h1 style="margin:0; color:#FFFFFF !important;">🛍️ {cfg['nombre_tienda']}</h1>
-            <p style="margin:4px 0 0 0; font-size:18px; color:#FFF3DC;">{cfg['eslogan']}</p>
+        <div class="hero-banner">
+            <h1>🛍️ {cfg['nombre_tienda']}</h1>
+            <p>{cfg['eslogan']}</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -562,17 +848,17 @@ else:
         st.write("")
         col_inf_1, col_inf_2, col_inf_3 = st.columns(3)
         with col_inf_1:
-            st.markdown(f"""<div style="background:#FFFFFF; border:2px solid {COLOR_CORAL}; border-radius:14px; padding:10px 14px;">
+            st.markdown(f"""<div class="info-card" style="border:2px solid {COLOR_CORAL};">
                 <span style="font-size:13px; color:#999;">📍 UBICACIÓN</span><br>
                 <span style="font-weight:700; color:{COLOR_CACAO};">{cfg['ubicacion']}</span>
             </div>""", unsafe_allow_html=True)
         with col_inf_2:
-            st.markdown(f"""<div style="background:#FFFFFF; border:2px solid {COLOR_AMARILLO}; border-radius:14px; padding:10px 14px;">
+            st.markdown(f"""<div class="info-card" style="border:2px solid {COLOR_AMARILLO};">
                 <span style="font-size:13px; color:#999;">⏰ ATENCIÓN</span><br>
                 <span style="font-weight:700; color:{COLOR_CACAO};">{cfg['horario']}</span>
             </div>""", unsafe_allow_html=True)
         with col_inf_3:
-            st.markdown(f"""<div style="background:#FFFFFF; border:2px solid {COLOR_LAVANDA}; border-radius:14px; padding:10px 14px;">
+            st.markdown(f"""<div class="info-card" style="border:2px solid {COLOR_LAVANDA};">
                 <span style="font-size:13px; color:#999;">🚚 ENVÍOS</span><br>
                 <span style="font-weight:700; color:{COLOR_CACAO};">{cfg['envios']}</span>
             </div>""", unsafe_allow_html=True)
