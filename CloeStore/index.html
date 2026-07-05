@@ -329,7 +329,7 @@ footer strong{color:#fff;}
   <div class="map-placeholder">
     <div class="map-icon">🗺️</div>
     <span id="mapLabel">Isla de Ometepe</span>
-    <a id="mapLink" href="https://maps.google.com/?q=Isla+de+Ometepe+Nicaragua" target="_blank" style="font-size:13px;color:var(--teal);font-weight:700;">Ver en Google Maps →</a>
+    <a id="mapLink" href="https://maps.app.goo.gl/h8Y5U51fGhHK88jz8">Ver en Google Maps →</a>
   </div>
 </section>
 
@@ -526,8 +526,7 @@ function applyConfig(cfg, logoUrl) {
   document.getElementById("visitHorario").textContent   = horario;
   document.getElementById("visitWa").textContent        = wa ? `+${wa}` : "—";
   document.getElementById("mapLabel").textContent        = ubicacion || "Nuestra ubicación";
-  if (ubicacion) document.getElementById("mapLink").href =
-    `https://maps.google.com/?q=${encodeURIComponent(ubicacion)}`;
+  // link fijo apuntando a ubicación exacta en Google Maps
 
   // Footer
   document.getElementById("footerName").textContent    = nombre;
