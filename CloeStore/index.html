@@ -389,7 +389,7 @@ const ENDPOINTS = [
   // 1. Directo (funciona si JSONBin tiene CORS habilitado para ese plan)
   {
     url: `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`,
-    headers: { "X-Master-Key": API_KEY, "X-Bin-Meta": "false" }
+    headers: { "X-Access-Key": API_KEY, "X-Bin-Meta": "false" }
   },
   // 2. Proxy allOrigins (convierte cualquier URL en CORS-friendly)
   {
@@ -401,7 +401,7 @@ const ENDPOINTS = [
   // 3. Proxy corsproxy.io
   {
     url: `https://corsproxy.io/?${encodeURIComponent(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`)}`,
-    headers: { "X-Master-Key": API_KEY },
+    headers: { "X-Access-Key": API_KEY },
     isCorsproxy: true
   }
 ];
