@@ -382,14 +382,14 @@ footer strong{color:#fff;}
 // CONFIGURACIÓN — usa proxy público para evitar CORS
 // ═══════════════════════════════════════════
 const BIN_ID   = "6a36ae18f5f4af5e2914a76c";
-const API_KEY  = "$2a$10$hYp9.5yOQYlQii6aNNbua.Bo8/imQ/b2f3kzKAt56AjNrYIk1Hiuy";
+const API_KEY  = "$2a$10$58oAfd9oS27KuxYpjr.m2.tW5OjTn4o2kk/6xg5sgPevnwyR9DSYq";
 
 // Intentamos 3 métodos en orden hasta que uno funcione
 const ENDPOINTS = [
   // 1. Directo (funciona si JSONBin tiene CORS habilitado para ese plan)
   {
     url: `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`,
-    headers: { "X-Access-Key": API_KEY, "X-Bin-Meta": "false" }
+    headers: { "X-Master-Key": API_KEY, "X-Bin-Meta": "false" }
   },
   // 2. Proxy allOrigins (convierte cualquier URL en CORS-friendly)
   {
@@ -401,7 +401,7 @@ const ENDPOINTS = [
   // 3. Proxy corsproxy.io
   {
     url: `https://corsproxy.io/?${encodeURIComponent(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`)}`,
-    headers: { "X-Access-Key": API_KEY },
+    headers: { "X-Master-Key": API_KEY },
     isCorsproxy: true
   }
 ];
