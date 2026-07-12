@@ -270,6 +270,12 @@ footer strong{color:#fff;}
       <div class="trust-pill">📍 <span id="trustUbicacion">Isla de Ometepe, Nicaragua</span></div>
       <div class="trust-pill">🚚 <span id="trustEnvios">Entregas locales garantizadas</span></div>
       <div class="trust-pill">⏰ <span id="trustHorario">Lun–Sáb, 8 AM – 6 PM</span></div>
+      <a href="https://chat.whatsapp.com/KkD5zDUfDwf8vAGcjnbJC1" target="_blank"
+         style="display:inline-flex;align-items:center;gap:8px;background:#128C7E;color:#fff;border-radius:99px;padding:9px 18px;font-size:13px;font-weight:700;box-shadow:0 4px 14px rgba(18,140,126,0.4);transition:transform .2s;"
+         onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+        <img src="https://cdn.simpleicons.org/whatsapp/FFFFFF" width="15" alt="" />
+        Únete a nuestro grupo
+      </a>
     </div>
   </div>
 </section>
@@ -337,7 +343,7 @@ footer strong{color:#fff;}
   <div class="map-placeholder">
     <div class="map-icon">🗺️</div>
     <span id="mapLabel">Isla de Ometepe</span>
-    <a id="mapLink" href="https://maps.app.goo.gl/h8Y5U51fGhHK88jz8">Ver en Google Maps →</a>
+    <a id="mapLink" href="https://maps.app.goo.gl/aiEYRT1mriLqe77Y8">Ver en Google Maps →</a>
   </div>
 </section>
 
@@ -547,7 +553,8 @@ function applyConfig(cfg, logoUrl) {
 // ── SOCIALS ──
 function buildSocials(cfg, wa) {
   const defs = [
-    { key:"_wa",      label:"WhatsApp",    color:"#25D366", icon:"whatsapp",  href: wa?`https://wa.me/${wa}`:"" },
+    { key:"_wa",      label:"WhatsApp",         color:"#25D366", icon:"whatsapp", href: wa?`https://wa.me/${wa}`:"" },
+    { key:"_wagroup", label:"Unirse al grupo",  color:"#128C7E", icon:"whatsapp", href: "https://chat.whatsapp.com/KkD5zDUfDwf8vAGcjnbJC1" },
     { key:"facebook", label:"Facebook",    color:"#1877F2", icon:"facebook"  },
     { key:"instagram",label:"Instagram",   color:"#E1306C", icon:"instagram" },
     { key:"tiktok",   label:"TikTok",      color:"#000000", icon:"tiktok"    },
